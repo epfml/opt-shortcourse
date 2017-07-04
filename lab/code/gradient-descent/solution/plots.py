@@ -2,8 +2,6 @@
 """function for plot."""
 import matplotlib.pyplot as plt
 import numpy as np
-from grid_search import get_best_parameters
-
 
 def prediction(w0, w1, mean_x, std_x):
     """Get the regression line from the model."""
@@ -11,6 +9,10 @@ def prediction(w0, w1, mean_x, std_x):
     x_normalized = (x - mean_x) / std_x
     return x, w0 + w1 * x_normalized
 
+def get_best_parameters(w0, w1, losses):
+    """Get the best w from the result of grid search."""
+    min_row, min_col = np.unravel_index(np.argmin(losses), losses.shape)
+    return losses[min_row, min_col], w0[min_row], w1[min_col]
 
 def base_visualization(grid_losses, w0_list, w1_list,
                        mean_x, std_x, height, weight):
@@ -39,28 +41,19 @@ def base_visualization(grid_losses, w0_list, w1_list,
 
     return fig
 
-
-def grid_visualization(grid_losses, w0_list, w1_list,
-                       mean_x, std_x, height, weight):
-    """Visualize how the trained model looks like under the grid search."""
-    fig = base_visualization(
-        grid_losses, w0_list, w1_list, mean_x, std_x, height, weight)
-
-    loss_star, w0_star, w1_star = get_best_parameters(
-        w0_list, w1_list, grid_losses)
-    # plot prediciton
-    x, f = prediction(w0_star, w1_star, mean_x, std_x)
-    ax2 = fig.get_axes()[2]
-    ax2.plot(x, f, 'r')
-
-    return fig
-
-
 def gradient_descent_visualization(
-        gradient_losses, gradient_ws,
-        grid_losses, grid_w0, grid_w1,
+        y, tx, compute_loss, gradient_losses, gradient_ws,
         mean_x, std_x, height, weight, n_iter=None):
     """Visualize how the loss value changes until n_iter."""
+    grid_w0 = np.linspace(-100, 200, 10)
+    grid_w1 = np.linspace(-150, 150, 10)
+    grid_losses = np.zeros((len(grid_w0), len(grid_w1)))
+    # compute loss for each combination of w0 and w1.
+    for ind_row, row in enumerate(grid_w0):
+        for ind_col, col in enumerate(grid_w1):
+            w = np.array([row, col])
+            grid_losses[ind_row, ind_col] = compute_loss(y, tx, w)
+
     fig = base_visualization(
         grid_losses, grid_w0, grid_w1, mean_x, std_x, height, weight)
 
